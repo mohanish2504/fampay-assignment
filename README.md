@@ -35,3 +35,12 @@
 ## ENV
 1. `QUERY_START`: 2024-01-01T00:00:00+0530 //this should be in ISO FORMAT
 2. `INTERVAL_SECONDS`: 10 // how often do you want to run query
+
+## Requirements matched:
+- [x]   Background fetch
+- [x]   Optimized search and paginated response. Both are merged in one.
+- [x]   Option to add api-key
+- [x]   Option to add queries 
+- [x]   Dockerized
+- [x]   Scalable and Optimized
+- [ ]   Dashboard
