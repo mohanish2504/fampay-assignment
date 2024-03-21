@@ -32,6 +32,8 @@
 3. To monitor how worker in works in backgorund you can do
 `sudo docker compose logs --follow --tail 10 worker`
 
+#### Please make sure to add `api-key` and `query` terms from above requests
+
 ## ENV
 1. `QUERY_START`: 2024-01-01T00:00:00+0530 //this should be in ISO FORMAT
 2. `INTERVAL_SECONDS`: 10 // how often do you want to run query
