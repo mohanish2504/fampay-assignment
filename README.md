@@ -16,10 +16,10 @@
 4. User can store multiple `api-key` from google to fetch videos. If one failes other is used.
 
 ## Techstack
-1. `Elastic Search`: It was mentioned in assignment, that user should be able to query, based on oneor two example, I went ahead with elastic, instead of manually writting any algorithm. 
+1. `Elastic Search`: It was mentioned in assignment, that user should be able to query. Based on one or two example, I found elastic to be better choice than manually writting any algorithm. 
 2. `Sqlite`: I chose sqlite here, since it is only going to be used to store video data, api-key, search terms and query based on id.
-3. `Redis`: This is for queue mechanism, which is used by celery. Also, we are using it for maintaining lock.
-4. `Celery`: Celery is for background tasks. It schedules task to fetch videos from youtube api every `10 seconds`
+3. `Redis`: This is for queue mechanism, which is used by celery. Also, we are using it for maintaining lock for scheduler.
+4. `Celery`: Celery is for background tasks. It schedules task to fetch videos from youtube api for interval you choose
 5. `Fastapi`: Fastapi is python web framework, it is quicker to make microservices with it.
 
 
