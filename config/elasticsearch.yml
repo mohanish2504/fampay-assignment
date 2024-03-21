@@ -1,0 +1,7 @@
+network.host: 0.0.0.0
+http.port: 9200
+xpack.security.enabled: false
+discovery.type: single-node
+cluster.name: elastic-cluster
+node.name: elastic
+cluster.routing.allocation.disk.threshold_enabled: false

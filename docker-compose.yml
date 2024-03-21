@@ -1,0 +1,38 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:7.0
+    container_name: redis
+    command: redis-server --save 20 1 --loglevel warning --requirepass ${REDIS_PASSWORD?Not set}
+    ports:
+      - 6379:6379
+    volumes:
+      - ./storage/redis_data:/data
+  elastic:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
+    container_name: elastic
+    ports:
+      - 9200:9200
+      - 9300:9300
+    volumes:
+      - ./storage/elastic_data:/usr/share/elasticsearch/data
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: worker
+    command: python -m worker
+    volumes:
+      - ./worker:/app
+    depends_on:
+      - redis
+      - elastic
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD?Not set}
+      ELASTIC_HOST: elastic
+      ELASTIC_PORT: 9200
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME?Not set}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD?Not set}
