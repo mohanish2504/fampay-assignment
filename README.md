@@ -29,6 +29,8 @@
     - `POST` /api/api-key : You can add api keys here.
     - `POST` /api/queries: You can add different search terms which will be called after on reqgular interval seconds e.g: `cricket`, `tea`, `football`
     - `GET` /api/video: Based on interval you can try to query here. It also accepts `query` param. Based on the search results it will give you the list of videos containing multiple params order by `publishedDate` in descending .
+3. To monitor how worker in works in backgorund you can do
+`sudo docker compose logs --follow --tail 10 worker`
 
 ## ENV
 1. `QUERY_START`: 2024-01-01T00:00:00+0530 //this should be in ISO FORMAT
