@@ -6,6 +6,6 @@ from backend.worker.jobs import celery_app
 celery_app.conf.beat_schedule = {
     "fetch_youtube_videos": {
         "task": "fetch_youtube_videos",
-        "schedule": timedelta(seconds=10),
+        "schedule": timedelta(seconds=settings.INTERVAL_SECONDS),
     },
 }

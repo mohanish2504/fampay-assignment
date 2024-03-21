@@ -8,6 +8,7 @@ services:
       - 6379:6379
     volumes:
       - ./storage/redis_data:/data
+  
   elastic:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.12.2
     container_name: elastic
@@ -17,22 +18,34 @@ services:
     volumes:
       - ./storage/elastic_data:/usr/share/elasticsearch/data
       - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
-  worker:
+  
+  
+  api:
+    restart: always
+    container_name: api
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: worker
-    command: python -m worker
+      dockerfile: ./Docker/api.dockerfile
+    ports:
+      - 8000:8000
     volumes:
-      - ./worker:/app
+      - ./storage:/usr/src/app/storage
+    depends_on:
+      - elastic
+    env_file:
+      - .env
+  worker:
+    deploy:
+      mode: replicated
+      replicas: 2   # since it was mention in assignment to make it scalable, we can use this to increase/decrease number of workers required.
+    build:
+      context: .
+      dockerfile: ./Docker/worker.dockerfile
+    volumes:
+      - ./storage:/usr/src/app/storage
+      - ./config/supervisord.conf:/etc/supervisord.conf
     depends_on:
       - redis
       - elastic
-    environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD?Not set}
-      ELASTIC_HOST: elastic
-      ELASTIC_PORT: 9200
-      ELASTIC_USERNAME: ${ELASTIC_USERNAME?Not set}
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD?Not set}
+    env_file:
+      - .env

@@ -16,3 +16,13 @@ class Video(SQLModel, table=True):
 
 class VideoFilter(BaseModel):
     query: Optional[str] = None
+    page: int = 1
+
+
+class PaginatedResponse(
+    BaseModel,
+):
+    count: int = Field()
+    items: list = Field()
+    next: Optional[int] = None
+    previous: Optional[int] = None

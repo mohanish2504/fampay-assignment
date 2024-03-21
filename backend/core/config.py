@@ -1,12 +1,16 @@
+from datetime import datetime
 from typing import Any, Dict, Optional
 from pydantic import RedisDsn, validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./storage/database.db"
+    DATABASE_FILE_PATH: str = "database.db"
 
     ELASTICSEARCH_URL: str = "http://localhost:9200"
+
+    INTERVAL_SECONDS: int = 60
+    QUERY_START: datetime
 
     REDIS_PASSWORD: str = "abcdef"
 
@@ -35,6 +39,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()

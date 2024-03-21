@@ -17,13 +17,13 @@ import redis_lock
 
 from backend.core.config import settings
 
-print(settings.REDIS_URL)
+
 celery_app = Celery("worker", broker=settings.REDIS_URL)
 
 
-def create_index(video: dict, elastic: Elasticsearch):
+def create_index(id: str, video: dict, elastic: Elasticsearch):
 
-    logger.info(f"Creating index for video {video['id']}")
+    logger.info(f"Creating index for video {id}")
 
     if not elastic.indices.exists(index="video"):
         logger.info("Creating index")
@@ -40,21 +40,23 @@ def create_index(video: dict, elastic: Elasticsearch):
                 }
             },
         )
-    id = video["id"]
-    try:
-        del video["id"]
 
-        resp = elastic.index(index="video", id=id, document=video)
-        print(resp["result"], video)
+    try:
+
+        elastic.index(index="video", id=id, document=video)
     except Exception as e:
         logger.error(f"Error creating index for video {id} {e}")
         pass
 
 
-@celery_app.task(name="fetch_and_store")
+@celery_app.task(name="fetch_and_store", acks_late=True, reject_on_worker_lost=True)
 def fetch_and_store(query: str):
     url = "https://www.googleapis.com/youtube/v3/search"
     logger.info(f"Fetching videos for query: {query}")
+
+    # you can uncomment this line, to check if task requeue is working
+    # sleep(3)
+
     # we can also use with Session(engine) as session: but this will make sure to use same function for both sql and elastic
     for session in get_db():
         statement = select(APIKey).where(APIKey.working == True)
@@ -68,23 +70,24 @@ def fetch_and_store(query: str):
             "part": "snippet",
             "maxResults": 50,
             "q": query,
+            "order": "date",
+            "publishedAfter": settings.QUERY_START.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "type": "video",
             "key": key.key,
         }
         response = requests.get(url, params=params)
 
         result = response.json()
+        logger.info(f"Response: {result}")
         if "error" in result:
             logger.error(f"Error fetching videos: {result['error']['message']}")
-            # if result["error"]["errors"][0]["reason"] == "quotaExceeded":
-
-            # for any reason this api should marked as exshausted so that it is not used again
-            statement = select(APIKey).where(APIKey.key == key.key)
-            api_key = session.exec(statement).first()
-            api_key.working = False
-            session.add(api_key)
-            session.commit()
-            logger.info(f"API Key exshausted/errored: {key.name}")
+            if result["error"]["errors"][0]["reason"] == "quotaExceeded":
+                statement = select(APIKey).where(APIKey.key == key.key)
+                api_key = session.exec(statement).first()
+                api_key.working = False
+                session.add(api_key)
+                session.commit()
+                logger.info(f"API Key exshausted/errored: {key.name}")
 
             # now after marking this key as exshausted we can call the same function again,
             # but since there can be multiple query subjects, its best to wait for 10 seconds and query again and check if any key available.
@@ -92,13 +95,15 @@ def fetch_and_store(query: str):
         else:
             for elastic in get_elastic_db():
                 for video in result["items"]:
-
+                    published_at = datetime.datetime.strptime(
+                        video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"
+                    )
+                    timestamp = published_at.timestamp()
                     video_data = {
                         "title": video["snippet"]["title"],
                         "description": video["snippet"]["description"],
-                        "published_at": datetime.datetime.strptime(
-                            video["snippet"]["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"
-                        ),
+                        "published_at": published_at,
+                        # for sorting
                         "thumbnail_urls": video["snippet"]["thumbnails"],
                         "id": video["id"]["videoId"],
                     }
@@ -110,11 +115,20 @@ def fetch_and_store(query: str):
                             "title"
                         ].split(" ")
                     video_data["tags"] = tags
-                    create_index(video=dict(video_data), elastic=elastic)
+                    video = Video(**video_data)
+                    create_index(
+                        id=video.id,
+                        video={
+                            "title": video.title,
+                            "description": video.description,
+                            "published_at": timestamp,  # to sort during query
+                            "tags": tags,
+                        },
+                        elastic=elastic,
+                    )
 
                     # checking if already exists in sql db
 
-                    video = Video(**video_data)
                     statement = select(Video).where(Video.id == video_data["id"])
                     existing_video = session.exec(statement).first()
 
@@ -140,10 +154,11 @@ def fetch_youtube_videos():
         logger.info("Got lock: Fetching videos")
         sleep(2)  # to fail lock request of other workers
         logger.info("Got lock: Adding all video queries")
-        # for session in get_db():
-        #     statement = select(Queries)
-        #     queries = session.exec(statement).all()
-        #     for query in queries:
-        #         celery_app.send_task(name="fetch_and_store", args=(query.query,))
+        for session in get_db():
+            statement = select(Queries)
+            queries = session.exec(statement).all()
+            logger.info(f"Adding {len(queries)} queries")
+            for query in queries:
+                celery_app.send_task(name="fetch_and_store", args=(query.query,))
 
         lock.release()
