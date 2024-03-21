@@ -1,5 +1,14 @@
 # Fampay Assignment
 
+## Requirements matched:
+- [x]   Background fetch
+- [x]   Optimized search and paginated response. Both are merged in one.
+- [x]   Option to add api-key
+- [x]   Option to add queries 
+- [x]   Dockerized
+- [x]   Scalable and Optimized
+- [ ]   Dashboard
+
 ## Description
 1. Fetches videos from youtube api every `10` seconds, based on the queries user store. This is can be configured from env. Look bottom most section.
 2. Stores fetched videos in database. Currently takes first `50` lastest videos.
@@ -8,7 +17,7 @@
 
 ## Techstack
 1. `Elastic Search`: It was mentioned in assignment, that user should be able to query, based on oneor two example, I went ahead with elastic, instead of manually writting any algorithm. 
-2. `Sqlite`: I chose sqlite here, since it is only going to be used to stored video data and query based on id.
+2. `Sqlite`: I chose sqlite here, since it is only going to be used to store video data, api-key, search terms and query based on id.
 3. `Redis`: This is for queue mechanism, which is used by celery. Also, we are using it for maintaining lock.
 4. `Celery`: Celery is for background tasks. It schedules task to fetch videos from youtube api every `10 seconds`
 5. `Fastapi`: Fastapi is python web framework, it is quicker to make microservices with it.
@@ -38,11 +47,3 @@
 1. `QUERY_START`: 2024-01-01T00:00:00+0530 //this should be in ISO FORMAT
 2. `INTERVAL_SECONDS`: 10 // how often do you want to run query
 
-## Requirements matched:
-- [x]   Background fetch
-- [x]   Optimized search and paginated response. Both are merged in one.
-- [x]   Option to add api-key
-- [x]   Option to add queries 
-- [x]   Dockerized
-- [x]   Scalable and Optimized
-- [ ]   Dashboard
