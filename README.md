@@ -1,8 +1,8 @@
 # Fampay Assignment
 
-## Desciption
+## Description
 1. Fetches videos from youtube api every `10` seconds, based on the queries user store. This is can be configured from env. Look bottom most section.
-2. Stores fetched videos in database
+2. Stores fetched videos in database.
 3. User can `query` and `search` videos from local.
 4. User can store multiple `api-key` from google to fetch videos. If one failes other is used.
 
