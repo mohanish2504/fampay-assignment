@@ -20,8 +20,7 @@ def get_videos(
     db: Session = Depends(get_db),
 ):
     """
-    I am not going for pagination here.
-    This method will return all the videos from the database.
+    This method will return first 10 videos based on the page.
     """
     try:
         # Search for videos in Elasticsearch
