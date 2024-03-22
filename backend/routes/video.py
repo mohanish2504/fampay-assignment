@@ -25,7 +25,6 @@ def get_videos(
     try:
         # Search for videos in Elasticsearch
         search_body = {
-            # This is definitely not the best way to do this
             "query": {"match": {"title": query.query}},
         }
         if not query.query:
